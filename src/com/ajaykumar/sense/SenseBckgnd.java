@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.widget.Toast;
 
 public class SenseBckgnd extends Service {
+	Timer temp;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -26,23 +27,23 @@ public class SenseBckgnd extends Service {
 				Toast.LENGTH_LONG).show();
 
 		mynotify("Service started", "The serivce has been started.", "Sense");
-		for (int i = 0; i < 10; i++) {
-			Timer temp = new Timer();
-			temp.schedule(new TimerTask() {
 
-				@Override
-				public void run() {
-					mynotify("Task", "Task repeating", "Sense");
-
-				}
-			}, 10000);
-		}
+		temp = new Timer();
+		temp.scheduleAtFixedRate(new TimerTask() {
+			int i ;
+			@Override
+			public void run() {
+				mynotify("Task", "Task repeating " + i, "Sense");
+				i++;
+			}
+		}, 1000, 3000);
 	}
 
 	@Override
 	public void onDestroy() {
 		Toast.makeText(this.getApplicationContext(), "Stopping service.",
 				Toast.LENGTH_LONG).show();
+		temp.cancel();
 	}
 
 	@Override
