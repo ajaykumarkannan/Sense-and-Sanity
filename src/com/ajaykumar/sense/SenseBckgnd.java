@@ -16,6 +16,9 @@ import android.widget.Toast;
 public class SenseBckgnd extends Service implements SensorEventListener {
 	private SensorManager mSensorManager;
 	private Sensor mOrientation;
+	private boolean upsidedownCurrentState = false;
+	private boolean upsidedownLastState = false;
+	NotificationManager mNotificationManager;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -32,6 +35,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 		mSensorManager.registerListener(this, mOrientation,
 				SensorManager.SENSOR_DELAY_NORMAL);
+
 	}
 
 	@Override
@@ -39,6 +43,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		Toast.makeText(this.getApplicationContext(), "Stopping service.",
 				Toast.LENGTH_LONG).show();
 		mSensorManager.unregisterListener(this);
+		mNotificationManager.cancelAll();
 	}
 
 	@Override
@@ -48,7 +53,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	public void mynotify(String title, String text, String ticker) {
 		String ns = Context.NOTIFICATION_SERVICE;
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+		mNotificationManager = (NotificationManager) getSystemService(ns);
 		int icon = R.drawable.ic_launcher;
 		CharSequence tickerText = ticker;
 		long when = System.currentTimeMillis();
@@ -78,8 +83,20 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		float pitch = event.values[1];
-		if(pitch < -120 || pitch > 120){
-			mynotify("Upside down", "The device is upside down", "Sunny side up");
+
+		if (pitch < -120 || pitch > 120) {
+			upsidedownCurrentState = true;
+			if (upsidedownCurrentState != upsidedownLastState) {
+				mynotify("Upside down", "The device is upside down",
+						"Sunny side up");
+				upsidedownLastState = upsidedownCurrentState;
+			}
+		} else {
+			upsidedownCurrentState = false;
+			if (upsidedownCurrentState != upsidedownLastState) {
+				mynotify("Normal", "The device is normal", "Normal side up");
+				upsidedownLastState = upsidedownCurrentState;
+			}
 		}
 	}
 }
