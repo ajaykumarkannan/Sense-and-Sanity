@@ -1,8 +1,5 @@
 package com.ajaykumar.sense;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +16,8 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private Sensor mOrientation;
 	private boolean upsidedownCurrentState = false;
 	private boolean upsidedownLastState = false;
-	private NotificationManager mNotificationManager;
-	private AudioManager myaudio; 
+	private AudioManager myaudio;
+	GlobalState mystate;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -30,8 +27,11 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onCreate() {
-		Toast.makeText(this.getApplicationContext(), "Service started.",
-				Toast.LENGTH_LONG).show();
+		mystate = (GlobalState) getApplicationContext();
+
+		Toast.makeText(this.getApplicationContext(),
+				"state: " + mystate.getStateFlipForSpeaker(),
+				Toast.LENGTH_SHORT).show();
 		// Sensor Code
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
@@ -42,38 +42,12 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onDestroy() {
-		Toast.makeText(this.getApplicationContext(), "Stopping service.",
-				Toast.LENGTH_LONG).show();
 		mSensorManager.unregisterListener(this);
-		mNotificationManager.cancelAll();
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startid) {
 		return START_STICKY;
-	}
-
-	public void mynotify(String title, String text, String ticker) {
-		String ns = Context.NOTIFICATION_SERVICE;
-		mNotificationManager = (NotificationManager) getSystemService(ns);
-		int icon = R.drawable.ic_launcher;
-		CharSequence tickerText = ticker;
-		long when = System.currentTimeMillis();
-
-		Notification notification = new Notification(icon, tickerText, when);
-		Context context = getApplicationContext();
-		CharSequence contentTitle = title;
-		CharSequence contentText = text;
-		Intent notificationIntent = new Intent(this, SenseBckgnd.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, 0);
-
-		notification.setLatestEventInfo(context, contentTitle, contentText,
-				contentIntent);
-
-		final int HELLO_ID = 1;
-
-		mNotificationManager.notify(HELLO_ID, notification);
 	}
 
 	@Override
@@ -84,22 +58,24 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		float pitch = event.values[1];
-
-		if (pitch < -120 || pitch > 120) {
-			upsidedownCurrentState = true;
-			if (upsidedownCurrentState != upsidedownLastState) {
-				mynotify("Upside down", "The device is upside down",
-						"Sunny side up");
-				upsidedownLastState = upsidedownCurrentState;
-				myaudio.setSpeakerphoneOn(true);
-			}
-		} else {
-			upsidedownCurrentState = false;
-			if (upsidedownCurrentState != upsidedownLastState) {
-				mynotify("Normal", "The device is normal", "Normal side up");
-				upsidedownLastState = upsidedownCurrentState;
-				myaudio.setSpeakerphoneOn(false);
+		if (mystate.getStateFlipForSpeaker()) {
+			float pitch = event.values[1];
+			if (pitch < -90 || pitch > 90) {
+				upsidedownCurrentState = true;
+				if (upsidedownCurrentState != upsidedownLastState) {
+					Toast.makeText(this.getApplicationContext(), "Speaker ON",
+							Toast.LENGTH_SHORT).show();
+					upsidedownLastState = upsidedownCurrentState;
+					myaudio.setSpeakerphoneOn(true);
+				}
+			} else {
+				upsidedownCurrentState = false;
+				if (upsidedownCurrentState != upsidedownLastState) {
+					Toast.makeText(this.getApplicationContext(), "Speaker OFF",
+							Toast.LENGTH_SHORT).show();
+					upsidedownLastState = upsidedownCurrentState;
+					myaudio.setSpeakerphoneOn(false);
+				}
 			}
 		}
 	}

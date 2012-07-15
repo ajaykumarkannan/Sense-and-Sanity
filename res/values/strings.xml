@@ -5,5 +5,9 @@
     <string name="app_name">Sense and Sanity</string>
     <string name="start_string">Start Service</string>
     <string name="stop_string">Stop Service</string>
+    <string name="placeholder">placeholder</string>
+    <string name="enableflip">Flip for Speaker</string>
+    <string name="debugdata">Debugging Data</string>
+    <string name="options">Options</string>
 
 </resources>

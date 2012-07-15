@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 public class CallReceiver extends BroadcastReceiver {
 	Intent service;
@@ -22,8 +21,9 @@ public class CallReceiver extends BroadcastReceiver {
 				Log.v("DEBUG", state + " " + phoneNumber);
 				service = new Intent(context, SenseBckgnd.class);
 				context.startService(service);
-				Toast toast = Toast.makeText(context, "Text Toast", Toast.LENGTH_LONG);
-				toast.show();
+				// Toast toast = Toast.makeText(context, "Text Toast",
+				// Toast.LENGTH_LONG);
+				// toast.show();
 
 			} else {
 				Log.v("DEBUG", state);
