@@ -3,17 +3,25 @@ package com.ajaykumar.sense;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 public class CallReceiver extends BroadcastReceiver {
 	Intent service;
+	SharedPreferences flags;
+	boolean flipForSpeaker;
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Bundle extras = intent.getExtras();
-		if (extras != null) {
+
+		flags = context.getSharedPreferences("myprefs",
+				Context.MODE_WORLD_READABLE);
+		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
+
+		if (extras != null && flipForSpeaker) {
 			String state = extras.getString(TelephonyManager.EXTRA_STATE);
 			if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
 				String phoneNumber = extras
