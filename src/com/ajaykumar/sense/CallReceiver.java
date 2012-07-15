@@ -6,36 +6,30 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 public class CallReceiver extends BroadcastReceiver {
+	Intent service;
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Bundle extras = intent.getExtras();
 		if (extras != null) {
 			String state = extras.getString(TelephonyManager.EXTRA_STATE);
-			Log.w("DEBUG", state);
-			if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+			if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
 				String phoneNumber = extras
 						.getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
-				Log.v("DEBUG", "Log " + phoneNumber);
+				Log.v("DEBUG", state + " " + phoneNumber);
+				service = new Intent(context, SenseBckgnd.class);
+				context.startService(service);
+				Toast toast = Toast.makeText(context, "Text Toast", Toast.LENGTH_LONG);
+				toast.show();
+
+			} else {
+				Log.v("DEBUG", state);
+				service = new Intent(context, SenseBckgnd.class);
+				context.stopService(service);
 			}
 		}
 	}
-
-	/*
-	 * public void onReceive(Context context, Intent intent) {
-	 * 
-	 * final String originalNumber = intent
-	 * .getStringExtra(Intent.EXTRA_PHONE_NUMBER);
-	 * 
-	 * Toast.makeText(context, "I know what you did last summer " +
-	 * originalNumber, Toast.LENGTH_LONG);
-	 * 
-	 * // START YOUR SERVICE HERE FOR COUNTING MINS Intent myintent = new
-	 * Intent(context, SenseBckgnd.class); myintent.putExtra("number",
-	 * originalNumber); context.startService(myintent);
-	 * 
-	 * }
-	 */
 }
