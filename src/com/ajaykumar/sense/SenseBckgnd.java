@@ -10,6 +10,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.os.IBinder;
 import android.widget.Toast;
 
@@ -18,7 +19,8 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private Sensor mOrientation;
 	private boolean upsidedownCurrentState = false;
 	private boolean upsidedownLastState = false;
-	NotificationManager mNotificationManager;
+	private NotificationManager mNotificationManager;
+	private AudioManager myaudio; 
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -35,7 +37,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 		mSensorManager.registerListener(this, mOrientation,
 				SensorManager.SENSOR_DELAY_NORMAL);
-
+		myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 	}
 
 	@Override
@@ -90,12 +92,14 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				mynotify("Upside down", "The device is upside down",
 						"Sunny side up");
 				upsidedownLastState = upsidedownCurrentState;
+				myaudio.setSpeakerphoneOn(true);
 			}
 		} else {
 			upsidedownCurrentState = false;
 			if (upsidedownCurrentState != upsidedownLastState) {
 				mynotify("Normal", "The device is normal", "Normal side up");
 				upsidedownLastState = upsidedownCurrentState;
+				myaudio.setSpeakerphoneOn(false);
 			}
 		}
 	}
