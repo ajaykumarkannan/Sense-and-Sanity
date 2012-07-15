@@ -3,5 +3,7 @@
 
     <string name="hello">Hello World, Main!</string>
     <string name="app_name">Sense and Sanity</string>
+    <string name="start_string">Start Service</string>
+    <string name="stop_string">Stop Service</string>
 
 </resources>

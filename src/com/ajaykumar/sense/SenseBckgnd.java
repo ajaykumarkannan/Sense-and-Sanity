@@ -1,19 +1,21 @@
 package com.ajaykumar.sense;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.widget.Toast;
 
-public class SenseBckgnd extends Service {
-	Timer temp;
+public class SenseBckgnd extends Service implements SensorEventListener {
+	private SensorManager mSensorManager;
+	private Sensor mOrientation;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -25,25 +27,18 @@ public class SenseBckgnd extends Service {
 	public void onCreate() {
 		Toast.makeText(this.getApplicationContext(), "Service started.",
 				Toast.LENGTH_LONG).show();
-
-		mynotify("Service started", "The serivce has been started.", "Sense");
-
-		temp = new Timer();
-		temp.scheduleAtFixedRate(new TimerTask() {
-			int i ;
-			@Override
-			public void run() {
-				mynotify("Task", "Task repeating " + i, "Sense");
-				i++;
-			}
-		}, 1000, 3000);
+		// Sensor Code
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mOrientation = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		mSensorManager.registerListener(this, mOrientation,
+				SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
 	@Override
 	public void onDestroy() {
 		Toast.makeText(this.getApplicationContext(), "Stopping service.",
 				Toast.LENGTH_LONG).show();
-		temp.cancel();
+		mSensorManager.unregisterListener(this);
 	}
 
 	@Override
@@ -72,5 +67,19 @@ public class SenseBckgnd extends Service {
 		final int HELLO_ID = 1;
 
 		mNotificationManager.notify(HELLO_ID, notification);
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		float pitch = event.values[1];
+		if(pitch < -120 || pitch > 120){
+			mynotify("Upside down", "The device is upside down", "Sunny side up");
+		}
 	}
 }
