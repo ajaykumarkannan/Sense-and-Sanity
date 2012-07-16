@@ -12,27 +12,27 @@ public class CallReceiver extends BroadcastReceiver {
 	Intent service;
 	SharedPreferences flags;
 	boolean flipForSpeaker;
+	SharedPreferences.Editor prefsEditor;
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Bundle extras = intent.getExtras();
 
-		flags = context.getSharedPreferences("myprefs",
-				Context.MODE_WORLD_READABLE);
+		flags = context.getSharedPreferences("myprefs", Context.MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
+
+		prefsEditor = flags.edit();
 
 		if (extras != null && flipForSpeaker) {
 			String state = extras.getString(TelephonyManager.EXTRA_STATE);
-			if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
-				String phoneNumber = extras
-						.getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
-				Log.v("DEBUG", state + " " + phoneNumber);
+			prefsEditor.putString("currentState", state);
+			prefsEditor.commit();
+			if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)
+					|| state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+				Log.v("DEBUG", state);
 				service = new Intent(context, SenseBckgnd.class);
+				service.putExtras(extras);
 				context.startService(service);
-				// Toast toast = Toast.makeText(context, "Text Toast",
-				// Toast.LENGTH_LONG);
-				// toast.show();
-
 			} else {
 				Log.v("DEBUG", state);
 				service = new Intent(context, SenseBckgnd.class);

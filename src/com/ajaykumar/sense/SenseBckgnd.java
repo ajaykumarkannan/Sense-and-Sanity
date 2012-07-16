@@ -12,18 +12,27 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
 	private SensorManager mSensorManager;
-	private Sensor mOrientation;
 	private boolean upsidedownCurrentState = false;
 	private boolean upsidedownLastState = false;
 	private AudioManager myaudio;
 	private NotificationManager mNotificationManager;
 	SharedPreferences flags;
-	boolean flipForSpeaker;
+	private boolean flipForSpeaker;
+	private boolean seenPhone = false;
+	private String currentState = null;
+	private boolean silenced = false;
+	private int ringerState;
+	float pitch = 0;
+	float roll = 0;
+	float prox = 0;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -38,11 +47,15 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		if (flipForSpeaker) {
 			// Sensor Code
 			mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-			mOrientation = mSensorManager
-					.getDefaultSensor(Sensor.TYPE_ORIENTATION);
-			mSensorManager.registerListener(this, mOrientation,
-					SensorManager.SENSOR_DELAY_NORMAL);
+			mSensorManager.registerListener(this,
+					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
+					SensorManager.SENSOR_DELAY_GAME);
+			mSensorManager.registerListener(this,
+					mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+					SensorManager.SENSOR_DELAY_GAME);
+
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+			ringerState = myaudio.getRingerMode();
 		}
 
 		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -61,10 +74,13 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	public void onDestroy() {
 		mSensorManager.unregisterListener(this);
 		mNotificationManager.cancelAll();
+		myaudio.setRingerMode(ringerState);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startid) {
+		Bundle extras = intent.getExtras();
+		currentState = extras.getString(TelephonyManager.EXTRA_STATE);
 		return START_STICKY;
 	}
 
@@ -76,23 +92,57 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		float pitch = event.values[1];
-		float roll = event.values[2];
-		if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
-			upsidedownCurrentState = true;
-			if (upsidedownCurrentState != upsidedownLastState) {
-				Toast.makeText(this.getApplicationContext(), "Speaker ON",
-						Toast.LENGTH_SHORT).show();
-				upsidedownLastState = upsidedownCurrentState;
-				myaudio.setSpeakerphoneOn(true);
+		Sensor sensor = event.sensor;
+		if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
+			pitch = event.values[1];
+			roll = event.values[2];
+		} else if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
+			prox = event.values[0];
+		}
+
+		if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
+			Log.v("DEBUG", "Phone off hook in service");
+			if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
+				upsidedownCurrentState = true;
+				if (upsidedownCurrentState != upsidedownLastState) {
+					Toast.makeText(this.getApplicationContext(), "Speaker ON",
+							Toast.LENGTH_SHORT).show();
+					upsidedownLastState = upsidedownCurrentState;
+					myaudio.setSpeakerphoneOn(true);
+				}
+			} else {
+				upsidedownCurrentState = false;
+				if (upsidedownCurrentState != upsidedownLastState) {
+					Toast.makeText(this.getApplicationContext(), "Speaker OFF",
+							Toast.LENGTH_SHORT).show();
+					upsidedownLastState = upsidedownCurrentState;
+					myaudio.setSpeakerphoneOn(false);
+				}
 			}
-		} else {
-			upsidedownCurrentState = false;
-			if (upsidedownCurrentState != upsidedownLastState) {
-				Toast.makeText(this.getApplicationContext(), "Speaker OFF",
-						Toast.LENGTH_SHORT).show();
-				upsidedownLastState = upsidedownCurrentState;
-				myaudio.setSpeakerphoneOn(false);
+		} else if (currentState.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+			Log.v("DEBUG", "Phone ringing");
+			if (!seenPhone) {
+				if (prox > 4) {
+					seenPhone = true;
+					Log.v("DEBUG", "SeenPhone");
+				} else {
+					// Loud ring here
+					Log.v("DEBUG", "Loud Ring");
+				}
+			} else {
+				if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
+					// Silence call
+					if (!silenced) {
+						Log.v("DEBUG", "Silencing Call");
+						myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+						silenced = true;
+					}
+				} else {
+					if (prox < 4) {
+						// Answer phone
+						Log.v("DEBUG", "Answer Call");
+					}
+				}
 			}
 		}
 	}
