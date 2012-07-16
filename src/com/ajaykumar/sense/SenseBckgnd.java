@@ -33,7 +33,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onCreate() {
-		flags = getSharedPreferences("myprefs", MODE_WORLD_READABLE);
+		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		if (flipForSpeaker) {
 			// Sensor Code
@@ -44,7 +44,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 					SensorManager.SENSOR_DELAY_NORMAL);
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		}
-		
+
 		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		Notification not = new Notification(R.drawable.ic_launcher,
 				"Sense Service Started", System.currentTimeMillis());
@@ -77,7 +77,8 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		float pitch = event.values[1];
-		if (pitch < -160 || pitch > 160) {
+		float roll = event.values[2];
+		if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
 			upsidedownCurrentState = true;
 			if (upsidedownCurrentState != upsidedownLastState) {
 				Toast.makeText(this.getApplicationContext(), "Speaker ON",

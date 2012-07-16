@@ -16,7 +16,8 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".Main"
-            android:label="@string/title_activity_main" >
+            android:label="@string/title_activity_main"
+            android:theme="@android:style/Theme.NoTitleBar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
