@@ -26,6 +26,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private NotificationManager mNotificationManager;
 	SharedPreferences flags;
 	private boolean flipForSpeaker;
+	private boolean silenceFlip;
 	private boolean seenPhone = false;
 	private String currentState = TelephonyManager.EXTRA_STATE_RINGING;
 	private boolean silenced = false;
@@ -47,7 +48,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	public void onCreate() {
 		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
-		if (flipForSpeaker) {
+		silenceFlip = flags.getBoolean("silenceflip", true);
+
+		if (flipForSpeaker || silenceFlip) {
 			// Sensor Code
 			mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 			mSensorManager.registerListener(this,
@@ -65,7 +68,8 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		Notification not = new Notification(R.drawable.ic_launcher,
 				"Sense Service Started", System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, Main.class), Notification.FLAG_ONGOING_EVENT);
+				new Intent(this, SenseBckgnd.class),
+				Notification.FLAG_ONGOING_EVENT);
 		not.flags = Notification.FLAG_ONGOING_EVENT;
 		not.setLatestEventInfo(this, "Sense and Sanity",
 				"Speaker Service Running", contentIntent);
@@ -96,6 +100,10 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		Sensor sensor = event.sensor;
+
+		// flipForSpeaker = flags.getBoolean("flipforspeaker", true);
+		// silenceFlip = flags.getBoolean("silenceflip", true);
+
 		if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
 			pitch = event.values[1];
 			roll = event.values[2];
@@ -151,9 +159,11 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 							&& (roll < 20 && roll > -20)) {
 						// Silence call
 						if (!silenced) {
-							Log.v("DEBUG", "Silencing Call");
-							myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-							silenced = true;
+							if (silenceFlip) {
+								Log.v("DEBUG", "Silencing Call");
+								myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+								silenced = true;
+							}
 						}
 					} else {
 						if (prox < 4) {

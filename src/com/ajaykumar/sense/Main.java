@@ -9,7 +9,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Main extends Activity {
 	private boolean enableFlipForSpeaker;
+	private boolean enableSilenceOnFlip;
 	private CheckBox flipForSpeakerBox;
+	private CheckBox silenceBox;
 	SharedPreferences flags;
 
 	// private SensorManager mSensorManager;
@@ -28,17 +30,24 @@ public class Main extends Activity {
 		// SensorManager.SENSOR_DELAY_NORMAL);
 
 		flipForSpeakerBox = (CheckBox) findViewById(R.id.flipBox);
+		silenceBox = (CheckBox) findViewById(R.id.silenceBox);
 
 		flags = this.getSharedPreferences("myprefs", MODE_PRIVATE);
-
 		enableFlipForSpeaker = flags.getBoolean("flipforspeaker", true);
-
+		enableSilenceOnFlip = flags.getBoolean("silenceflip", true);
+		
 		// flipForSpeakerBox.setOnCheckedChangeListener(null);
 
 		if (enableFlipForSpeaker) {
 			flipForSpeakerBox.setChecked(true);
 		} else {
 			flipForSpeakerBox.setChecked(false);
+		}
+
+		if (enableSilenceOnFlip) {
+			silenceBox.setChecked(true);
+		} else {
+			silenceBox.setChecked(false);
 		}
 
 		flipForSpeakerBox
@@ -57,6 +66,22 @@ public class Main extends Activity {
 						}
 					}
 				});
+		silenceBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				SharedPreferences.Editor prefsEditor = flags.edit();
+				if (isChecked) {
+					prefsEditor.putBoolean("silenceflip", true);
+					prefsEditor.commit();
+				} else {
+					prefsEditor.putBoolean("silenceflip", false);
+					prefsEditor.commit();
+				}
+			}
+		});
+
 	}
 
 	protected void onPause() {

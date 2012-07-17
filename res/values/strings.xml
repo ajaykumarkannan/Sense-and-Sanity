@@ -10,4 +10,6 @@
     <string name="enableflip">Flip for Speaker</string>
     <string name="debugdata">Debugging Data</string>
     <string name="options">Options</string>
+    <string name="enablesilence">Flip to Silence</string>
+
 </resources>
