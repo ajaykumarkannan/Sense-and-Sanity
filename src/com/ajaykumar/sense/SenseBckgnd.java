@@ -27,12 +27,15 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	SharedPreferences flags;
 	private boolean flipForSpeaker;
 	private boolean seenPhone = false;
-	private String currentState = null;
+	private String currentState = TelephonyManager.EXTRA_STATE_RINGING;
 	private boolean silenced = false;
 	private int ringerState;
 	float pitch = 0;
 	float roll = 0;
 	float prox = 0;
+	private boolean orientationInitialized = false;
+	private boolean proxInitialzed = false;
+	private boolean sensorsIntialized = false;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -96,51 +99,67 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
 			pitch = event.values[1];
 			roll = event.values[2];
+			orientationInitialized = true;
+			// Log.v("PROX", "Pitch " + pitch + ", Roll " + roll);
 		} else if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
 			prox = event.values[0];
+			Log.v("PROX", "Prox " + prox);
+			proxInitialzed = true;
 		}
 
-		if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
-			Log.v("DEBUG", "Phone off hook in service");
-			if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
-				upsidedownCurrentState = true;
-				if (upsidedownCurrentState != upsidedownLastState) {
-					Toast.makeText(this.getApplicationContext(), "Speaker ON",
-							Toast.LENGTH_SHORT).show();
-					upsidedownLastState = upsidedownCurrentState;
-					myaudio.setSpeakerphoneOn(true);
-				}
-			} else {
-				upsidedownCurrentState = false;
-				if (upsidedownCurrentState != upsidedownLastState) {
-					Toast.makeText(this.getApplicationContext(), "Speaker OFF",
-							Toast.LENGTH_SHORT).show();
-					upsidedownLastState = upsidedownCurrentState;
-					myaudio.setSpeakerphoneOn(false);
-				}
-			}
-		} else if (currentState.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
-			Log.v("DEBUG", "Phone ringing");
-			if (!seenPhone) {
-				if (prox > 4) {
-					seenPhone = true;
-					Log.v("DEBUG", "SeenPhone");
-				} else {
-					// Loud ring here
-					Log.v("DEBUG", "Loud Ring");
-				}
-			} else {
+		if (orientationInitialized && proxInitialzed) {
+			sensorsIntialized = true;
+		}
+
+		if (sensorsIntialized) {
+			if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
+				// Log.v("DEBUG", "Phone off hook in service");
 				if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
-					// Silence call
-					if (!silenced) {
-						Log.v("DEBUG", "Silencing Call");
-						myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-						silenced = true;
+					upsidedownCurrentState = true;
+					if (upsidedownCurrentState != upsidedownLastState) {
+						Toast.makeText(this.getApplicationContext(),
+								"Speaker ON", Toast.LENGTH_SHORT).show();
+						upsidedownLastState = upsidedownCurrentState;
+						myaudio.setSpeakerphoneOn(true);
+						Log.v("DEBUG", "Speaker ON");
 					}
 				} else {
-					if (prox < 4) {
-						// Answer phone
-						Log.v("DEBUG", "Answer Call");
+					upsidedownCurrentState = false;
+					if (upsidedownCurrentState != upsidedownLastState) {
+						Toast.makeText(this.getApplicationContext(),
+								"Speaker OFF", Toast.LENGTH_SHORT).show();
+						upsidedownLastState = upsidedownCurrentState;
+						myaudio.setSpeakerphoneOn(false);
+						Log.v("DEBUG", "Speaker OFF");
+					}
+				}
+			} else if (currentState
+					.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
+				// Log.v("DEBUG", "Phone ringing");
+				if (!seenPhone) {
+					if (prox > 4
+							&& !((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20))) {
+						seenPhone = true;
+						Log.v("DEBUG", "SeenPhone" + prox + ", Pitch " + pitch
+								+ ", Roll " + roll);
+					} else {
+						// Loud ring here
+						// Log.v("DEBUG", "Loud Ring");
+					}
+				} else {
+					if ((pitch < -160 || pitch > 160)
+							&& (roll < 20 && roll > -20)) {
+						// Silence call
+						if (!silenced) {
+							Log.v("DEBUG", "Silencing Call");
+							myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+							silenced = true;
+						}
+					} else {
+						if (prox < 4) {
+							// Answer phone
+							// Log.v("DEBUG", "Answer Call");
+						}
 					}
 				}
 			}
