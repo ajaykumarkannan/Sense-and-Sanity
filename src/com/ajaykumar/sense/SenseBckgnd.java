@@ -39,6 +39,10 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private int ringerState;
 	float pitch = 0;
 	float roll = 0;
+	float prox = 0;
+
+	boolean orientationInit = false;
+	boolean proxInit = false;
 
 	Time initTime, currTime;
 
@@ -52,7 +56,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	public void onCreate() {
 		initTime = new Time();
 		currTime = new Time();
-		
+
 		initTime.setToNow();
 		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
@@ -68,7 +72,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			mSensorManager.registerListener(this,
 					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
 					SensorManager.SENSOR_DELAY_UI);
-			
+			mSensorManager.registerListener(this,
+					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
+					SensorManager.SENSOR_DELAY_UI);
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 			ringerState = myaudio.getRingerMode();
 		}
@@ -114,8 +120,12 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			System.arraycopy(event.values, 0, mGravs, 0, 3);
 			break;
 		case Sensor.TYPE_MAGNETIC_FIELD:
-			for (int i = 0; i < 3; i++)
-				System.arraycopy(event.values, 0, mGeoMags, 0, 3);
+			System.arraycopy(event.values, 0, mGeoMags, 0, 3);
+			break;
+		case Sensor.TYPE_PROXIMITY:
+			prox = event.values[0];
+			proxInit = true;
+			Log.v("DEBUG", "Prox: " + prox);
 			break;
 		default:
 			return;
@@ -123,6 +133,11 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		if (currTime.toMillis(true) - initTime.toMillis(true) > 1000) {
 			if (SensorManager.getRotationMatrix(mRotationM, null, mGravs,
 					mGeoMags)) {
+				orientationInit = true;
+			} else
+				orientationInit = false;
+
+			if (orientationInit && proxInit) {
 				SensorManager.getOrientation(mRotationM, mOrientation);
 				pitch = Math.round(Math.toDegrees(mOrientation[1]));
 				roll = Math.round(Math.toDegrees(mOrientation[2]));
@@ -152,10 +167,11 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 						.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
 					// Log.v("DEBUG", "Phone ringing");
 					if (!seenPhone) {
-						if (!((myabs(pitch) < 40) && (myabs(roll) > 150))) {
+						if (prox >= 1
+								&& !((myabs(pitch) < 40) && (myabs(roll) > 150))) {
 							seenPhone = true;
-							Log.v("DEBUG", "SeenPhone: " + " Pitch " + pitch
-									+ ", Roll " + roll);
+							Log.v("DEBUG", "SeenPhone: Prox " + prox
+									+ ", Pitch " + pitch + ", Roll " + roll);
 						} else {
 							// Loud ring here
 							// Log.v("DEBUG", "Loud Ring");
@@ -170,14 +186,16 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									silenced = true;
 								}
 							}
-						} else {
-							// if (prox < 4) {
+						} else if (prox < 1) {
 							// Answer phone
 							// Log.v("DEBUG", "Answer Call");
+
 						}
 					}
 				}
 			}
+		} else {
+			// Do nothing
 		}
 	}
 
