@@ -38,9 +38,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private int ringerState;
 	float pitch = 0;
 	float roll = 0;
-	float prox = 0;
 	private boolean orientationInitialized = false;
-	private boolean proxInitialzed = false;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -63,9 +61,6 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 							SensorManager.SENSOR_DELAY_UI);
 			mSensorManager.registerListener(this,
 					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-					SensorManager.SENSOR_DELAY_UI);
-			mSensorManager.registerListener(this,
-					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
 					SensorManager.SENSOR_DELAY_UI);
 
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -115,11 +110,6 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			for (int i = 0; i < 3; i++)
 				System.arraycopy(event.values, 0, mGeoMags, 0, 3);
 			break;
-		case Sensor.TYPE_PROXIMITY:
-			prox = event.values[0];
-			Log.v("PROX", "Prox " + prox);
-			proxInitialzed = true;
-			break;
 		default:
 			return;
 		}
@@ -128,12 +118,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			SensorManager.getOrientation(mRotationM, mOrientation);
 			pitch = Math.round(Math.toDegrees(mOrientation[1]));
 			roll = Math.round(Math.toDegrees(mOrientation[2]));
-			orientationInitialized = true;
-		} else {
-			orientationInitialized = false;
-		}
 
-		if (orientationInitialized && proxInitialzed) {
 			if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
 				// Log.v("DEBUG", "Phone off hook in service");
 				if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
@@ -159,10 +144,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 					.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
 				// Log.v("DEBUG", "Phone ringing");
 				if (!seenPhone) {
-					if (prox > 4
-							&& !((myabs(pitch) < 20) && (myabs(roll) > 160))) {
+					if (!((myabs(pitch) < 20) && (myabs(roll) > 160))) {
 						seenPhone = true;
-						Log.v("DEBUG", "SeenPhone" + prox + ", Pitch " + pitch
+						Log.v("DEBUG", "SeenPhone: " + ", Pitch " + pitch
 								+ ", Roll " + roll);
 					} else {
 						// Loud ring here
@@ -179,10 +163,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 							}
 						}
 					} else {
-						if (prox < 4) {
-							// Answer phone
-							// Log.v("DEBUG", "Answer Call");
-						}
+						// if (prox < 4) {
+						// Answer phone
+						// Log.v("DEBUG", "Answer Call");
 					}
 				}
 			}
