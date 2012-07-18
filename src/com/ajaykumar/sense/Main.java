@@ -13,6 +13,7 @@ public class Main extends Activity {
 	private CheckBox flipForSpeakerBox;
 	private CheckBox silenceBox;
 	SharedPreferences flags;
+	SharedPreferences.Editor prefsEditor;
 
 	// private SensorManager mSensorManager;
 	// private Sensor mOrientation;
@@ -35,8 +36,10 @@ public class Main extends Activity {
 		flags = this.getSharedPreferences("myprefs", MODE_PRIVATE);
 		enableFlipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		enableSilenceOnFlip = flags.getBoolean("silenceflip", true);
-		
-		// flipForSpeakerBox.setOnCheckedChangeListener(null);
+
+		prefsEditor = flags.edit();
+		prefsEditor.putBoolean("flipforspeaker", enableFlipForSpeaker);
+		prefsEditor.putBoolean("silenceflip", enableSilenceOnFlip);
 
 		if (enableFlipForSpeaker) {
 			flipForSpeakerBox.setChecked(true);
@@ -56,7 +59,7 @@ public class Main extends Activity {
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView,
 							boolean isChecked) {
-						SharedPreferences.Editor prefsEditor = flags.edit();
+						prefsEditor = flags.edit();
 						if (isChecked) {
 							prefsEditor.putBoolean("flipforspeaker", true);
 							prefsEditor.commit();
@@ -71,7 +74,7 @@ public class Main extends Activity {
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
-				SharedPreferences.Editor prefsEditor = flags.edit();
+				prefsEditor = flags.edit();
 				if (isChecked) {
 					prefsEditor.putBoolean("silenceflip", true);
 					prefsEditor.commit();

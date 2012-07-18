@@ -20,6 +20,11 @@ import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
 	private SensorManager mSensorManager;
+	private float[] mGravs = new float[3];
+	private float[] mGeoMags = new float[3];
+	private float[] mOrientation = new float[3];
+	private float[] mRotationM = new float[9];
+
 	private boolean upsidedownCurrentState = false;
 	private boolean upsidedownLastState = false;
 	private AudioManager myaudio;
@@ -36,7 +41,6 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	float prox = 0;
 	private boolean orientationInitialized = false;
 	private boolean proxInitialzed = false;
-	private boolean sensorsIntialized = false;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -51,14 +55,18 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		silenceFlip = flags.getBoolean("silenceflip", true);
 
 		if (flipForSpeaker || silenceFlip) {
-			// Sensor Code
-			mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+			/************** Sensor Code *******************/
+			mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+			mSensorManager
+					.registerListener(this, mSensorManager
+							.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+							SensorManager.SENSOR_DELAY_UI);
+			mSensorManager.registerListener(this,
+					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+					SensorManager.SENSOR_DELAY_UI);
 			mSensorManager.registerListener(this,
 					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
-					SensorManager.SENSOR_DELAY_GAME);
-			mSensorManager.registerListener(this,
-					mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-					SensorManager.SENSOR_DELAY_GAME);
+					SensorManager.SENSOR_DELAY_UI);
 
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 			ringerState = myaudio.getRingerMode();
@@ -99,30 +107,36 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-		Sensor sensor = event.sensor;
-
-		// flipForSpeaker = flags.getBoolean("flipforspeaker", true);
-		// silenceFlip = flags.getBoolean("silenceflip", true);
-
-		if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
-			pitch = event.values[1];
-			roll = event.values[2];
-			orientationInitialized = true;
-			// Log.v("PROX", "Pitch " + pitch + ", Roll " + roll);
-		} else if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
+		switch (event.sensor.getType()) {
+		case Sensor.TYPE_ACCELEROMETER:
+			System.arraycopy(event.values, 0, mGravs, 0, 3);
+			break;
+		case Sensor.TYPE_MAGNETIC_FIELD:
+			for (int i = 0; i < 3; i++)
+				System.arraycopy(event.values, 0, mGeoMags, 0, 3);
+			break;
+		case Sensor.TYPE_PROXIMITY:
 			prox = event.values[0];
 			Log.v("PROX", "Prox " + prox);
 			proxInitialzed = true;
+			break;
+		default:
+			return;
+		}
+
+		if (SensorManager.getRotationMatrix(mRotationM, null, mGravs, mGeoMags)) {
+			SensorManager.getOrientation(mRotationM, mOrientation);
+			pitch = Math.round(Math.toDegrees(mOrientation[1]));
+			roll = Math.round(Math.toDegrees(mOrientation[2]));
+			orientationInitialized = true;
+		} else {
+			orientationInitialized = false;
 		}
 
 		if (orientationInitialized && proxInitialzed) {
-			sensorsIntialized = true;
-		}
-
-		if (sensorsIntialized) {
 			if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
 				// Log.v("DEBUG", "Phone off hook in service");
-				if ((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20)) {
+				if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
 					upsidedownCurrentState = true;
 					if (upsidedownCurrentState != upsidedownLastState) {
 						Toast.makeText(this.getApplicationContext(),
@@ -146,7 +160,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				// Log.v("DEBUG", "Phone ringing");
 				if (!seenPhone) {
 					if (prox > 4
-							&& !((pitch < -160 || pitch > 160) && (roll < 20 && roll > -20))) {
+							&& !((myabs(pitch) < 20) && (myabs(roll) > 160))) {
 						seenPhone = true;
 						Log.v("DEBUG", "SeenPhone" + prox + ", Pitch " + pitch
 								+ ", Roll " + roll);
@@ -155,8 +169,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 						// Log.v("DEBUG", "Loud Ring");
 					}
 				} else {
-					if ((pitch < -160 || pitch > 160)
-							&& (roll < 20 && roll > -20)) {
+					if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
 						// Silence call
 						if (!silenced) {
 							if (silenceFlip) {
@@ -174,5 +187,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				}
 			}
 		}
+	}
+
+	float myabs(float in) {
+		return in > 0 ? in : -in;
 	}
 }
