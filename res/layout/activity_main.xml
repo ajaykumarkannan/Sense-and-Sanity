@@ -28,4 +28,11 @@
         android:text="@string/enablesilence"
         android:textColor="#EEEEEE" />
 
+    <CheckBox
+        android:id="@+id/pickupBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pickupstring"
+        android:textColor="#EEEEEE" />
+
 </LinearLayout>

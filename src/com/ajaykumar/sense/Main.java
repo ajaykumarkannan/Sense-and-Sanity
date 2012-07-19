@@ -8,10 +8,9 @@ import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Main extends Activity {
-	private boolean enableFlipForSpeaker;
-	private boolean enableSilenceOnFlip;
-	private CheckBox flipForSpeakerBox;
-	private CheckBox silenceBox;
+	private boolean enableFlipForSpeaker, enableSilenceOnFlip,
+			enableAnswerOnPickUp;
+	private CheckBox flipForSpeakerBox, silenceBox, pickupBox;
 	SharedPreferences flags;
 	SharedPreferences.Editor prefsEditor;
 
@@ -32,30 +31,24 @@ public class Main extends Activity {
 
 		flipForSpeakerBox = (CheckBox) findViewById(R.id.flipBox);
 		silenceBox = (CheckBox) findViewById(R.id.silenceBox);
+		pickupBox = (CheckBox) findViewById(R.id.pickupBox);
 
 		flags = this.getSharedPreferences("myprefs", MODE_PRIVATE);
 		enableFlipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		enableSilenceOnFlip = flags.getBoolean("silenceflip", true);
+		enableAnswerOnPickUp = flags.getBoolean("answerPickup", true);
 
 		prefsEditor = flags.edit();
 		prefsEditor.putBoolean("flipforspeaker", enableFlipForSpeaker);
 		prefsEditor.putBoolean("silenceflip", enableSilenceOnFlip);
+		prefsEditor.putBoolean("answerPickup", enableAnswerOnPickUp);
 
-		if (enableFlipForSpeaker) {
-			flipForSpeakerBox.setChecked(true);
-		} else {
-			flipForSpeakerBox.setChecked(false);
-		}
-
-		if (enableSilenceOnFlip) {
-			silenceBox.setChecked(true);
-		} else {
-			silenceBox.setChecked(false);
-		}
+		flipForSpeakerBox.setChecked(enableFlipForSpeaker);
+		silenceBox.setChecked(enableSilenceOnFlip);
+		pickupBox.setChecked(enableAnswerOnPickUp);
 
 		flipForSpeakerBox
 				.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView,
 							boolean isChecked) {
@@ -70,7 +63,6 @@ public class Main extends Activity {
 					}
 				});
 		silenceBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView,
 					boolean isChecked) {
@@ -80,6 +72,20 @@ public class Main extends Activity {
 					prefsEditor.commit();
 				} else {
 					prefsEditor.putBoolean("silenceflip", false);
+					prefsEditor.commit();
+				}
+			}
+		});
+		pickupBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				prefsEditor = flags.edit();
+				if (isChecked) {
+					prefsEditor.putBoolean("answerPickup", true);
+					prefsEditor.commit();
+				} else {
+					prefsEditor.putBoolean("answerPickup", false);
 					prefsEditor.commit();
 				}
 			}

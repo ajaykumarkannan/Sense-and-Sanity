@@ -32,8 +32,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	private AudioManager myaudio;
 	private NotificationManager mNotificationManager;
 	SharedPreferences flags;
-	private boolean flipForSpeaker;
-	private boolean silenceFlip;
+	private boolean flipForSpeaker, silenceFlip, pickupAnswer;
 	private boolean seenPhone = false;
 	private String currentState = TelephonyManager.EXTRA_STATE_RINGING;
 	private boolean silenced = false;
@@ -57,7 +56,6 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	public void onCreate() {
 		initTime = new Time();
 		currTime = new Time();
-
 		initTime.setToNow();
 
 		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -65,6 +63,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		silenceFlip = flags.getBoolean("silenceflip", true);
+		pickupAnswer = flags.getBoolean("answerPickup", true);
 
 		if (flipForSpeaker || silenceFlip) {
 			/************** Sensor Code *******************/
@@ -192,19 +191,16 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 							}
 						} else if (prox < 1) {
 							// Answer phone
-							Log.v("DEBUG", "Answer Call");
-							if (tm.getCallState() != TelephonyManager.CALL_STATE_RINGING) {
-								return;
+							if (pickupAnswer) {
+								if (tm.getCallState() != TelephonyManager.CALL_STATE_RINGING) {
+									return;
+								}
+								Log.v("DEBUG", "Answer Call");
+								// Answer the phone	
+								answerPhoneHeadsethook(this.getBaseContext());
 							}
-
-							// Answer the phone
-							Log.d("AutoAnswer",
-									"Error trying to answer using telephony service.  Falling back to headset.");
-							answerPhoneHeadsethook(this.getBaseContext());
 						}
-
 					}
-
 				}
 			}
 		} else {
@@ -225,5 +221,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK));
 		context.sendOrderedBroadcast(buttonUp,
 				"android.permission.CALL_PRIVILEGED");
+		
+		myaudio.setMicrophoneMute(false);
 	}
 }

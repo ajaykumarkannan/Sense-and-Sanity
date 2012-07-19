@@ -11,5 +11,6 @@
     <string name="debugdata">Debugging Data</string>
     <string name="options">Options</string>
     <string name="enablesilence">Flip to Silence</string>
+    <string name="pickupstring">Pick up to Answer</string>
 
 </resources>
