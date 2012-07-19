@@ -17,6 +17,7 @@ import android.os.IBinder;
 import android.telephony.TelephonyManager;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
@@ -40,7 +41,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 	float pitch = 0;
 	float roll = 0;
 	float prox = 0;
-
+	private TelephonyManager tm;
 	boolean orientationInit = false;
 	boolean proxInit = false;
 
@@ -58,6 +59,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		currTime = new Time();
 
 		initTime.setToNow();
+
+		tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+
 		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		silenceFlip = flags.getBoolean("silenceflip", true);
@@ -188,10 +192,19 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 							}
 						} else if (prox < 1) {
 							// Answer phone
-							// Log.v("DEBUG", "Answer Call");
+							Log.v("DEBUG", "Answer Call");
+							if (tm.getCallState() != TelephonyManager.CALL_STATE_RINGING) {
+								return;
+							}
 
+							// Answer the phone
+							Log.d("AutoAnswer",
+									"Error trying to answer using telephony service.  Falling back to headset.");
+							answerPhoneHeadsethook(this.getBaseContext());
 						}
+
 					}
+
 				}
 			}
 		} else {
@@ -201,5 +214,16 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 
 	float myabs(float in) {
 		return in > 0 ? in : -in;
+	}
+
+	// Got help from
+	// http://code.google.com/p/auto-answer/source/browse/trunk/src/com/everysoft/autoanswer/AutoAnswerIntentService.java
+	private void answerPhoneHeadsethook(Context context) {
+		// Simulate a press of the headset button to pick up the call
+		Intent buttonUp = new Intent(Intent.ACTION_MEDIA_BUTTON);
+		buttonUp.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(
+				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK));
+		context.sendOrderedBroadcast(buttonUp,
+				"android.permission.CALL_PRIVILEGED");
 	}
 }
