@@ -133,7 +133,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		default:
 			return;
 		}
-		if (currTime.toMillis(true) - initTime.toMillis(true) > 1000) {
+		if (currTime.toMillis(true) - initTime.toMillis(true) > 500) {
 			if (SensorManager.getRotationMatrix(mRotationM, null, mGravs,
 					mGeoMags)) {
 				orientationInit = true;
@@ -182,12 +182,10 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 					} else {
 						if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
 							// Silence call
-							if (!silenced) {
-								if (silenceFlip) {
-									Log.v("DEBUG", "Silencing Call");
-									myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-									silenced = true;
-								}
+							if (!silenced && silenceFlip) {
+								Log.v("DEBUG", "Silencing Call");
+								myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+								silenced = true;
 							}
 						} else if (prox < 1) {
 							// Answer phone
@@ -196,7 +194,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									return;
 								}
 								Log.v("DEBUG", "Answer Call");
-								// Answer the phone	
+								// Answer the phone
 								answerPhoneHeadsethook(this.getBaseContext());
 							}
 						}
@@ -221,7 +219,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK));
 		context.sendOrderedBroadcast(buttonUp,
 				"android.permission.CALL_PRIVILEGED");
-		
+
 		myaudio.setMicrophoneMute(false);
 	}
 }
