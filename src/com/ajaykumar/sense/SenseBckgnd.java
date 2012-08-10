@@ -21,11 +21,15 @@ import android.view.KeyEvent;
 import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
+	private int MAX = 100;
+
 	private SensorManager mSensorManager;
 	private float[] mGravs = new float[3];
 	private float[] mGeoMags = new float[3];
 	private float[] mOrientation = new float[3];
 	private float[] mRotationM = new float[9];
+	private int speakerVolume, headsetVolume;
+	private int volMax = 0;
 
 	private boolean upsidedownCurrentState = false;
 	private boolean upsidedownLastState = false;
@@ -64,6 +68,8 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		silenceFlip = flags.getBoolean("silenceflip", true);
 		pickupAnswer = flags.getBoolean("answerPickup", true);
+		speakerVolume = flags.getInt("speakervolume", MAX);
+		headsetVolume = flags.getInt("headsetvolume", MAX);
 
 		if (flipForSpeaker || silenceFlip) {
 			/************** Sensor Code *******************/
@@ -79,7 +85,14 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
 					SensorManager.SENSOR_DELAY_UI);
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+			volMax = myaudio
+					.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
+			speakerVolume *= volMax;
+			speakerVolume /= 100;
+			headsetVolume *= volMax;
+			headsetVolume /= 100;
 			ringerState = myaudio.getRingerMode();
+
 		}
 
 		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -154,6 +167,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									"Speaker ON", Toast.LENGTH_SHORT).show();
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(true);
+							myaudio.setStreamVolume(AudioManager.STREAM_VOICE_CALL, speakerVolume, AudioManager.FLAG_VIBRATE);
 							Log.v("DEBUG", "Speaker ON");
 						}
 					} else {
@@ -163,6 +177,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									"Speaker OFF", Toast.LENGTH_SHORT).show();
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(false);
+							myaudio.setStreamVolume(AudioManager.STREAM_VOICE_CALL, headsetVolume, AudioManager.FLAG_VIBRATE);
 							Log.v("DEBUG", "Speaker OFF");
 						}
 					}

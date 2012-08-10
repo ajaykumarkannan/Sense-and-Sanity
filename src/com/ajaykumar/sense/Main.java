@@ -6,11 +6,17 @@ import android.os.Bundle;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 
 public class Main extends Activity {
+	private int MAX = 100;
+
 	private boolean enableFlipForSpeaker, enableSilenceOnFlip,
 			enableAnswerOnPickUp;
+	private int speakerVol, headsetVol;
 	private CheckBox flipForSpeakerBox, silenceBox, pickupBox;
+	private SeekBar speakerBar, headsetBar;
 	SharedPreferences flags;
 	SharedPreferences.Editor prefsEditor;
 
@@ -33,19 +39,31 @@ public class Main extends Activity {
 		silenceBox = (CheckBox) findViewById(R.id.silenceBox);
 		pickupBox = (CheckBox) findViewById(R.id.pickupBox);
 
+		speakerBar = (SeekBar) findViewById(R.id.speakerBar);
+		headsetBar = (SeekBar) findViewById(R.id.headsetBar);
+
 		flags = this.getSharedPreferences("myprefs", MODE_PRIVATE);
 		enableFlipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		enableSilenceOnFlip = flags.getBoolean("silenceflip", true);
 		enableAnswerOnPickUp = flags.getBoolean("answerPickup", true);
+		speakerVol = flags.getInt("speakervolume", MAX);
+		headsetVol = flags.getInt("headsetvolume", MAX);
 
 		prefsEditor = flags.edit();
 		prefsEditor.putBoolean("flipforspeaker", enableFlipForSpeaker);
 		prefsEditor.putBoolean("silenceflip", enableSilenceOnFlip);
 		prefsEditor.putBoolean("answerPickup", enableAnswerOnPickUp);
+		prefsEditor.putInt("speakervolume", speakerVol);
+		prefsEditor.putInt("headsetvolume", headsetVol);
+		prefsEditor.commit();
 
 		flipForSpeakerBox.setChecked(enableFlipForSpeaker);
 		silenceBox.setChecked(enableSilenceOnFlip);
 		pickupBox.setChecked(enableAnswerOnPickUp);
+		speakerBar.setMax(MAX);
+		speakerBar.setProgress(speakerVol);
+		headsetBar.setMax(MAX);
+		headsetBar.setProgress(headsetVol);
 
 		flipForSpeakerBox
 				.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -91,6 +109,57 @@ public class Main extends Activity {
 			}
 		});
 
+		speakerBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				if (fromUser) {
+					speakerVol = progress;
+					prefsEditor = flags.edit();
+					prefsEditor.putInt("speakervolume", speakerVol);
+					prefsEditor.commit();
+				}
+			}
+		});
+
+		headsetBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				if (fromUser) {
+					headsetVol = progress;
+					prefsEditor = flags.edit();
+					prefsEditor.putInt("headsetvolume", headsetVol);
+					prefsEditor.commit();
+				}
+			}
+		});
 	}
 
 	protected void onPause() {

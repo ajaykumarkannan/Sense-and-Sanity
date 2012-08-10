@@ -28,6 +28,57 @@
         android:text="@string/enablesilence"
         android:textColor="#EEEEEE" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/volumestring"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="#EEEEEE" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="@string/headsetstring"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#EEEEEE" />
+
+        <SeekBar
+            android:id="@+id/headsetBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="10dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="@string/speakerstring"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#EEEEEE" />
+
+        <SeekBar
+            android:id="@+id/speakerBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="10dp" />
+    </LinearLayout>
+
     <CheckBox
         android:id="@+id/pickupBox"
         android:layout_width="wrap_content"
