@@ -234,7 +234,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK));
 		context.sendOrderedBroadcast(buttonUp,
 				"android.permission.CALL_PRIVILEGED");
-
+		myaudio.setMicrophoneMute(true);
 		myaudio.setMicrophoneMute(false);
 	}
 }
