@@ -1,3 +1,21 @@
+/***************Copyright 2012 Ajaykumar Kannan******************************
+
+This file is part of Sense and Sanity.
+
+Sense and Sanity is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Sense and Sanity is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
+****************************************************************************/
+
 package com.ajaykumar.sense;
 
 import android.app.Notification;
@@ -85,8 +103,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
 					SensorManager.SENSOR_DELAY_UI);
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-			volMax = myaudio
-					.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
+			volMax = myaudio.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
 			speakerVolume *= volMax;
 			speakerVolume /= 100;
 			headsetVolume *= volMax;
@@ -167,7 +184,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									"Speaker ON", Toast.LENGTH_SHORT).show();
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(true);
-							myaudio.setStreamVolume(AudioManager.STREAM_VOICE_CALL, speakerVolume, AudioManager.FLAG_VIBRATE);
+							myaudio.setStreamVolume(
+									AudioManager.STREAM_VOICE_CALL,
+									speakerVolume, AudioManager.FLAG_VIBRATE);
 							Log.v("DEBUG", "Speaker ON");
 						}
 					} else {
@@ -177,7 +196,9 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									"Speaker OFF", Toast.LENGTH_SHORT).show();
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(false);
-							myaudio.setStreamVolume(AudioManager.STREAM_VOICE_CALL, headsetVolume, AudioManager.FLAG_VIBRATE);
+							myaudio.setStreamVolume(
+									AudioManager.STREAM_VOICE_CALL,
+									headsetVolume, AudioManager.FLAG_VIBRATE);
 							Log.v("DEBUG", "Speaker OFF");
 						}
 					}
@@ -225,16 +246,24 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		return in > 0 ? in : -in;
 	}
 
-	// Got help from
-	// http://code.google.com/p/auto-answer/source/browse/trunk/src/com/everysoft/autoanswer/AutoAnswerIntentService.java
 	private void answerPhoneHeadsethook(Context context) {
 		// Simulate a press of the headset button to pick up the call
+		Intent buttonDown = new Intent(Intent.ACTION_MEDIA_BUTTON);
+		buttonDown.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(
+				KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HEADSETHOOK));
+		context.sendOrderedBroadcast(buttonDown,
+				"android.permission.CALL_PRIVILEGED");
+
+		// froyo and beyond trigger on buttonUp instead of buttonDown
 		Intent buttonUp = new Intent(Intent.ACTION_MEDIA_BUTTON);
 		buttonUp.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(
 				KeyEvent.ACTION_UP, KeyEvent.KEYCODE_HEADSETHOOK));
 		context.sendOrderedBroadcast(buttonUp,
 				"android.permission.CALL_PRIVILEGED");
-		myaudio.setMicrophoneMute(true);
-		myaudio.setMicrophoneMute(false);
+
+		if(myaudio.isMicrophoneMute()){
+			Log.v("DEBUG", "Microphone mute");
+			myaudio.setMicrophoneMute(false);
+		}
 	}
 }
