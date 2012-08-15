@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
+ ****************************************************************************/
 
 package com.ajaykumar.sense;
 
@@ -40,6 +40,8 @@ import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
 	private int MAX = 100;
+
+	private boolean answered = false;
 
 	private SensorManager mSensorManager;
 	private float[] mGravs = new float[3];
@@ -167,9 +169,10 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			if (SensorManager.getRotationMatrix(mRotationM, null, mGravs,
 					mGeoMags)) {
 				orientationInit = true;
-			} else
+			} else {
 				orientationInit = false;
-
+			}
+			
 			if (orientationInit && proxInit) {
 				SensorManager.getOrientation(mRotationM, mOrientation);
 				pitch = Math.round(Math.toDegrees(mOrientation[1]));
@@ -229,9 +232,13 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 								if (tm.getCallState() != TelephonyManager.CALL_STATE_RINGING) {
 									return;
 								}
-								Log.v("DEBUG", "Answer Call");
-								// Answer the phone
-								answerPhoneHeadsethook(this.getBaseContext());
+								if (!answered) {
+									Log.v("DEBUG", "Answer Call");
+									// Answer the phone
+									answerPhoneHeadsethook(this
+											.getBaseContext());
+									answered = true;
+								}
 							}
 						}
 					}
@@ -261,7 +268,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		context.sendOrderedBroadcast(buttonUp,
 				"android.permission.CALL_PRIVILEGED");
 
-		if(myaudio.isMicrophoneMute()){
+		if (myaudio.isMicrophoneMute()) {
 			Log.v("DEBUG", "Microphone mute");
 			myaudio.setMicrophoneMute(false);
 		}

@@ -22,7 +22,7 @@ along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ajaykumar.sense"
     android:versionCode="1"
-    android:versionName="0.4.1" >
+    android:versionName="0.6" >
 
     <uses-sdk
         android:minSdkVersion="8"
