@@ -1,5 +1,4 @@
 <!--
-
 Copyright 2012 Ajaykumar Kannan
 
 This file is part of Sense and Sanity.
@@ -16,7 +15,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
-
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -30,6 +28,16 @@ along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.sensor.proximity"
+        android:required="true" />
 
     <application
         android:icon="@drawable/ic_launcher"
