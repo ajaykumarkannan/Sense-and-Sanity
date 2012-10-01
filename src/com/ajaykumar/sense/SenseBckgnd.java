@@ -36,7 +36,6 @@ import android.telephony.TelephonyManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.widget.Toast;
 
 public class SenseBckgnd extends Service implements SensorEventListener {
 	private int MAX = 100;
@@ -76,6 +75,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		return null;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate() {
 		initTime = new Time();
@@ -87,7 +87,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		flags = getSharedPreferences("myprefs", MODE_PRIVATE);
 		flipForSpeaker = flags.getBoolean("flipforspeaker", true);
 		silenceFlip = flags.getBoolean("silenceflip", true);
-		pickupAnswer = flags.getBoolean("answerPickup", true);
+		pickupAnswer = flags.getBoolean("answerPickup", false);
 		speakerVolume = flags.getInt("speakervolume", MAX);
 		headsetVolume = flags.getInt("headsetvolume", MAX);
 
@@ -97,13 +97,13 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 			mSensorManager
 					.registerListener(this, mSensorManager
 							.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-							SensorManager.SENSOR_DELAY_UI);
+							SensorManager.SENSOR_DELAY_NORMAL);
 			mSensorManager.registerListener(this,
 					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-					SensorManager.SENSOR_DELAY_UI);
+					SensorManager.SENSOR_DELAY_NORMAL);
 			mSensorManager.registerListener(this,
 					mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
-					SensorManager.SENSOR_DELAY_UI);
+					SensorManager.SENSOR_DELAY_NORMAL);
 			myaudio = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 			volMax = myaudio.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
 			speakerVolume *= volMax;
@@ -160,7 +160,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 		case Sensor.TYPE_PROXIMITY:
 			prox = event.values[0];
 			proxInit = true;
-			Log.v("DEBUG", "Prox: " + prox);
+			Log.d("DEBUG", "Prox: " + prox);
 			break;
 		default:
 			return;
@@ -177,52 +177,48 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				SensorManager.getOrientation(mRotationM, mOrientation);
 				pitch = Math.round(Math.toDegrees(mOrientation[1]));
 				roll = Math.round(Math.toDegrees(mOrientation[2]));
-				// Log.v("DEBUG", "Pitch " + pitch+ ", Roll " + roll);
+				// Log.d("DEBUG", "Pitch " + pitch+ ", Roll " + roll);
 				if (currentState.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
-					// Log.v("DEBUG", "Phone off hook in service");
+					Log.d("DEBUG", "Phone off hook in service");
 					if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
 						upsidedownCurrentState = true;
-						if (upsidedownCurrentState != upsidedownLastState) {
-							Toast.makeText(this.getApplicationContext(),
-									"Speaker ON", Toast.LENGTH_SHORT).show();
+						if (upsidedownCurrentState != upsidedownLastState) {						
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(true);
 							myaudio.setStreamVolume(
 									AudioManager.STREAM_VOICE_CALL,
 									speakerVolume, AudioManager.FLAG_VIBRATE);
-							Log.v("DEBUG", "Speaker ON");
+							Log.d("DEBUG", "Speaker ON");
 						}
 					} else {
 						upsidedownCurrentState = false;
 						if (upsidedownCurrentState != upsidedownLastState) {
-							Toast.makeText(this.getApplicationContext(),
-									"Speaker OFF", Toast.LENGTH_SHORT).show();
 							upsidedownLastState = upsidedownCurrentState;
 							myaudio.setSpeakerphoneOn(false);
 							myaudio.setStreamVolume(
 									AudioManager.STREAM_VOICE_CALL,
 									headsetVolume, AudioManager.FLAG_VIBRATE);
-							Log.v("DEBUG", "Speaker OFF");
+							Log.d("DEBUG", "Speaker OFF");
 						}
 					}
 				} else if (currentState
 						.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
-					// Log.v("DEBUG", "Phone ringing");
+					// Log.d("DEBUG", "Phone ringing");
 					if (!seenPhone) {
 						if (prox >= 1
 								&& !((myabs(pitch) < 40) && (myabs(roll) > 150))) {
 							seenPhone = true;
-							Log.v("DEBUG", "SeenPhone: Prox " + prox
+							Log.d("DEBUG", "SeenPhone: Prox " + prox
 									+ ", Pitch " + pitch + ", Roll " + roll);
 						} else {
 							// Loud ring here
-							// Log.v("DEBUG", "Loud Ring");
+							// Log.d("DEBUG", "Loud Ring");
 						}
 					} else {
 						if ((myabs(pitch) < 20) && (myabs(roll) > 160)) {
 							// Silence call
 							if (!silenced && silenceFlip) {
-								Log.v("DEBUG", "Silencing Call");
+								Log.d("DEBUG", "Silencing Call");
 								myaudio.setRingerMode(AudioManager.RINGER_MODE_SILENT);
 								silenced = true;
 							}
@@ -233,7 +229,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 									return;
 								}
 								if (!answered) {
-									Log.v("DEBUG", "Answer Call");
+									Log.d("DEBUG", "Answer Call");
 									// Answer the phone
 									answerPhoneHeadsethook(this
 											.getBaseContext());
@@ -269,7 +265,7 @@ public class SenseBckgnd extends Service implements SensorEventListener {
 				"android.permission.CALL_PRIVILEGED");
 
 		if (myaudio.isMicrophoneMute()) {
-			Log.v("DEBUG", "Microphone mute");
+			Log.d("DEBUG", "Microphone mute");
 			myaudio.setMicrophoneMute(false);
 		}
 	}

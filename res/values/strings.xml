@@ -21,10 +21,9 @@ along with Sense and Sanity.  If not, see <http://www.gnu.org/licenses/>.
 
 <resources>
 
-    <string name="app_name">Sense and Sanity</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="app_name">The Force</string>
     <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">Sense and Sanity</string>
+    <string name="title_activity_main">The Force</string>
     <string name="start_string">Start Service</string>
     <string name="stop_string">Stop Service</string>
     <string name="placeholder">placeholder</string>
